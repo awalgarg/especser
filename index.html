@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>especser</title>
+	<link rel="stylesheet" type="text/css" href="src/css/fonts.css">
+	<link rel="stylesheet/less" type="text/css" href="src/css/layout.css">
+	<link rel="stylesheet/less" type="text/css" href="src/css/content.css">
+	<script type="text/javascript" src="./src/mod/localforage.min.js"></script>
+</head>
+<body>
+<div id="top-bar" class="">
+	<span class="logoish" title="poor man's logo">especser</span>
+	<form id="search-form">
+		<input type="search" name="search" placeholder="Search..." autofocus autocomplete="off">
+		<ul id="search-results"></ul>
+	</form>
+	<div class="option-box">
+		<button id="btn-update">Update</button>
+		<button id="btn-clear">Clear Store</button>
+		<!-- <button id="btn-fulltext">Fulltext Search</button> -->
+	</div>
+</div>
+<div class="content-wrapper">
+	<div id="sidebar">
+		<ul id="open-tab-descriptors"></ul>
+		<span class="static-background">Ctrl+P to search</span>
+	</div>
+	<div id="content">
+		<div id="preview" class="tab-content hidden"></div>
+		<div class="static-background info">especser is an in-browser app to browse and read the ECMA-262 ECMAScript Standard Specification Edition 6.0.<br> Written by Awal Garg aka Rash.</div>
+	</div>
+</div>
+<pre id="console"></pre>
+<div id="suspended-tabs" class="hidden"></div>
+<script type="text/javascript" src="dist/index.js">
+	System.import('src/index');
+</script>
+</body>
+</html>

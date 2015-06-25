@@ -1,0 +1,27 @@
+{
+  "name": "especser",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "WTFPL",
+  "dependencies": {
+    "jspm": "^0.15.7"
+  },
+  "jspm": {
+    "directories": {},
+    "dependencies": {
+      "fetch": "github:github/fetch@^0.9.0",
+      "less": "github:aaike/jspm-less-plugin@^0.0.5",
+      "localforage": "npm:localforage@^1.2.3"
+    },
+    "devDependencies": {
+      "babel": "npm:babel-core@^5.1.13",
+      "babel-runtime": "npm:babel-runtime@^5.1.13",
+      "core-js": "npm:core-js@^0.9.4"
+    }
+  }
+}

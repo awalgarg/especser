@@ -1,0 +1,318 @@
+/**
+ * directly copied from ecmascript's own css
+ */
+.tab-content { /* this one is slightly modified... maaybe */
+	background-color: #fdfdfc;
+    color: #333333;
+    font-family: Cambria, Palatino Linotype, Palatino, Liberation Serif, serif;
+    font-size: 17px;
+    line-height: 135%;
+    padding: 1rem;
+
+	h1 {
+		font-size: 110%;
+		margin-bottom: 0.8em;
+		padding-bottom: 0.2em;
+		position: sticky;
+		top: 0;
+		z-index: 1;
+		background-color: #fdfdfc;
+		box-shadow: 0 0 6px #fdfdfc;
+		margin-left: -7em;
+		padding-left: 7em;
+	}
+
+	.stern.warning {
+	  font-weight: bold;
+	  text-transform: uppercase;
+	}
+
+	p.ECMAaddress {
+	  margin-bottom: 0em;
+	  margin-top: 0em;
+	}
+
+	p.normalBullet {
+	  margin-left: 4em;
+	  text-indent: -1.7em;
+	  margin-top: 0em;
+	  margin-bottom: 0.25em;
+	}
+
+	p.normalBulletSubstep {
+	  margin-left: 6em;
+	  text-indent: -1em;
+	  margin-top: 0em;
+	  margin-bottom: 0.25em;
+	}
+
+	pre.NoteCode {
+	  margin-bottom: 0em;
+	  margin-top: 0em;
+	}
+
+	div.note {
+	  margin: 1em 0 1em 6em;
+	}
+
+	span.nh {
+	  float: left;
+	  width: 6em;
+	  margin-left: -6em;
+	}
+
+	figure {
+	  display: block;
+	  margin: 1em 0 3em 0;
+	}
+
+	figure object {
+	  display: block;
+	  margin: 0 auto;
+	}
+
+	figure table.real-table {
+	  margin: 0 auto;
+	}
+
+	figure figcaption {
+	  display: block;
+	  color: #555555;
+	  font-weight: bold;
+	  text-align: center;
+	  margin-bottom: 0.25em;
+	}
+
+	figcaption :target {
+	  /* When a user visits #table-1, slide the caption down
+	         so it won't be obscured by a sticky heading (issue #73).
+	         Thanks to Claude Pache for this "nasty trick" (his words). */
+	  display: inline-block;
+	  padding-top: 2em;
+	  margin-top: -2em;
+	}
+
+	table.real-table {
+	  border-collapse: collapse;
+	}
+
+	table.real-table td, table.real-table th {
+	  border: 1px solid black;
+	  padding: 0.4em;
+	  vertical-align: baseline;
+	}
+
+	table.real-table th {
+	  background-color: #eeeeee;
+	}
+
+	table.lightweight-table {
+	  border-collapse: collapse;
+	  margin: 0 0 0 1.5em;
+	}
+
+	table.lightweight-table td, table.lightweight-table th {
+	  border: none;
+	  padding: 0 0.5em;
+	  vertical-align: baseline;
+	}
+
+	div.display {
+	  margin: 1em 0 1em 2em;
+	}
+
+	div.gp {
+	  margin-left: 2.4em;
+	  margin-top: 0.9em;
+	}
+
+	div.gp.prod {
+	  margin-left: 0;
+	}
+
+	div.rhs {
+	  margin-left: 2.4em;
+	  margin-right: -10em;
+	}
+
+	div.pile {
+	  margin-left: 2.4em;
+	  max-width: 40em;
+	}
+
+	div.keyword.pile code {
+	  float: left;
+	  width: 25%;
+	}
+
+	div.keyword5.pile code {
+	  float: left;
+	  width: 20%;
+	}
+
+	div.operator.pile code {
+	  float: left;
+	  width: 16%;
+	}
+
+	div.end-pile {
+	  clear: both;
+	}
+
+	sub.g-opt {
+	  color: #d1009e;
+	  /* sort of magenta */
+	}
+
+	sub.g-params {
+	  color: #49a08a;
+	  /* sort of aqua */
+	}
+
+	code {
+	  /* including code.t, meaning "terminal" or "token" */
+	  font-weight: bold;
+	  color: #555555;
+	}
+
+	span.nt {
+	  /* nonterminal */
+	  font-family: Times New Roman, Times, FreeSerif, serif;
+	  font-style: italic;
+	}
+
+	span.geq {
+	  font-weight: bold;
+	}
+
+	span.grhsmod {
+	  /* right-hand side modifier, like "one of", "but not" */
+	  font-weight: bold;
+	  color: #555555;
+	}
+
+	span.grhsannot {
+	  /* right-hand side annotation, like "[empty]" */
+	  font-family: Helvetica, Arial, Liberation Sans, sans-serif;
+	  font-size: smaller;
+	}
+
+	span.chgloss {
+	  /* gloss for a character, like "asterisk" */
+	  font-style: italic;
+	}
+
+	span.gprose {
+	  font-family: Helvetica, Arial, Liberation Sans, sans-serif;
+	  font-size: 90%;
+	}
+
+	div.gsumxref {
+	  /* grammar summary cross-reference, used in Annex A */
+	  width: 8em;
+	  float: right;
+	}
+
+	span.prod {
+	  margin-left: 5pt;
+	  margin-right: 5pt;
+	}
+
+	div.rhs > code.t,
+	div.rhs > span.nt,
+	div.rhs > span.grhsannot,
+	div.rhs > span.grhsmod,
+	div.rhs > span.chgloss,
+	div.rhs > span.gprose,
+	div.rhs > var,
+	.prod > span.geq,
+	.prod > code.t,
+	.prod > span.nt,
+	.prod > span.grhsannot,
+	.prod > span.grhsmod,
+	.prod > span.chgloss,
+	.prod > span.gprose,
+	div.rhs > var {
+	  margin-left: 5pt;
+	}
+
+	div.rhs > code.t:first-child,
+	div.rhs > span.nt:first-child,
+	div.rhs > span.grhsannot:first-child,
+	div.rhs > span.grhsmod:first-child,
+	div.rhs > span.chgloss:first-child,
+	div.rhs > span.gprose:first-child,
+	div.rhs > var:first-child,
+	.prod > span.geq:first-child,
+	.prod > code.t:first-child,
+	.prod > span.nt:first-child,
+	.prod > span.grhsannot:first-child,
+	.prod > span.grhsmod:first-child,
+	.prod > span.chprose:first-child,
+	.prod > span.gprose:first-child,
+	.prod > var:first-child {
+	  margin-left: 0;
+	}
+
+	ul > li {
+	  list-style-type: disc;
+	}
+
+	ul > li > p {
+	  margin-bottom: 0.25em;
+	  margin-top: 0em;
+	}
+
+	ol.proc {
+	  margin-top: 0.5em;
+	}
+
+	ol.proc > li {
+	  list-style-type: decimal;
+	}
+
+	ol.proc > li > ol.block > li {
+	  list-style-type: lower-latin;
+	}
+
+	.tab-content
+	ol.proc > li > ol.block > li > ol.block > li {
+	  list-style-type: lower-roman;
+	}
+
+	ol.proc > li > ol.block > li > ol.block > li >
+	ol.block > li {
+	  list-style-type: decimal;
+	}
+
+	ol.proc > li > ol.block > li > ol.block > li >
+	ol.block > li > ol.block > li {
+	  list-style-type: lower-latin;
+	}
+
+	.tab-content
+	ol.proc > li > ol.block > li > ol.block > li >
+	ol.block > li > ol.block > li > ol.block > li {
+	  list-style-type: lower-roman;
+	}
+
+	p.special1 {
+	  padding-left: +3em;
+	  text-indent: -1em;
+	}
+
+	p.special2 {
+	  padding-left: +11em;
+	  text-indent: -1em;
+	}
+
+	p.special3 {
+	  padding-left: +6em;
+	  text-indent: -1em;
+	}
+
+	p.special4 {
+	  padding-left: +3em;
+	  text-indent: -1em;
+	}
+}
