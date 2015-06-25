@@ -1,15 +1,19 @@
 {
   "name": "especser",
   "version": "1.0.0",
-  "description": "",
+  "description": "browse the es spec",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Awal Garg aka Rash <https://github.com/awalGarg>",
   "license": "WTFPL",
   "dependencies": {
     "jspm": "^0.15.7"
+  },
+  "repository": {
+  	"type": "git",
+  	"url": "https://github.com/awalGarg/especser/"
   },
   "jspm": {
     "directories": {},
