@@ -167,6 +167,7 @@ export function update () {
 				this.classList.add('hidden');
 				this.removeEventListener('dblclick', removeMe);
 			}, false);
+			window.dispatchEvent(new Event('hashchange'));
 		}
 	);
 }

@@ -10647,6 +10647,7 @@ System.register('src/mod/domconsole', [], function (_export) {
 						args[_key] = arguments[_key];
 					}
 
+					c.classList.remove('hidden');
 					c.style.color = '';
 					c.textContent = args.join(' ');
 				},
@@ -10655,6 +10656,7 @@ System.register('src/mod/domconsole', [], function (_export) {
 						args[_key2] = arguments[_key2];
 					}
 
+					c.classList.remove('hidden');
 					c.style.color = 'red';
 					c.textContent = args.join(' ');
 				},
@@ -10917,6 +10919,7 @@ System.register('src/spec', ['npm:babel-runtime@5.5.8/core-js/promise', 'src/mod
 				this.classList.add('hidden');
 				this.removeEventListener('dblclick', removeMe);
 			}, false);
+			window.dispatchEvent(new Event('hashchange'));
 		});
 	}
 
@@ -11048,8 +11051,8 @@ System.register('src/spec', ['npm:babel-runtime@5.5.8/core-js/promise', 'src/mod
 		}
 	};
 });
-System.register('src/domhandler', ['npm:babel-runtime@5.5.8/helpers/to-consumable-array', 'src/spec', 'src/mod/shortcuts', 'src/mod/utils'], function (_export) {
-	var _toConsumableArray, Spec, Shortcuts, Utils, results, inputBox, active, tabs, descriptorList, openTabDescriptors, suspendedTabs, content, previewBox;
+System.register('src/domhandler', ['npm:babel-runtime@5.5.8/helpers/to-consumable-array', 'src/spec', 'src/mod/shortcuts', 'src/mod/utils', 'src/mod/domconsole'], function (_export) {
+	var _toConsumableArray, Spec, Shortcuts, Utils, domconsole, results, inputBox, active, tabs, descriptorList, openTabDescriptors, suspendedTabs, content, previewBox;
 
 	/**
   * helpers for handlers
@@ -11073,6 +11076,15 @@ System.register('src/domhandler', ['npm:babel-runtime@5.5.8/helpers/to-consumabl
 					href: '#' + encodeURIComponent(res.index),
 					dataset: {
 						index: res.index
+					},
+					on: {
+						click: function click(e) {
+							e.preventDefault();
+							active.classList.remove('active');
+							this.classList.add('active');
+							active = this;
+							form$onEnter.call($.id('search-form'), { target: inputBox });
+						}
 					},
 					childNodes: [$.make('h4', {
 						classList: ['result-heading'],
@@ -11179,31 +11191,26 @@ System.register('src/domhandler', ['npm:babel-runtime@5.5.8/helpers/to-consumabl
 		previewContent(Spec.indexToFrame(target.dataset.index));
 	}
 
-	function anchor$shouldPreventDefault(target) {
-		if (target.nodeName === 'A' && target.dataset.index) {
-			return target;
-		} else if (target.nodeName === 'SPAN') {
-			if (target.parentNode.nodeName === 'A' && target.parentNode.dataset.index) return target.parentNode;
-		}
-		return false;
-	}
+	function window$loaded(ev) {
+		var _this = this;
 
-	function anchor$onClick(ev) {
-		return true;
-		var target = anchor$shouldPreventDefault(ev.target || ev.srcElement);
-		if (!target) return;
-
-		ev.preventDefault();
-		if (target.classList.contains('link-newtab')) {
-			return newTab(Spec.indexToFrame(target.dataset.index));
+		if (window.localStorage.getItem('lastIndexed')) {
+			Spec.initialize().then(function (_) {
+				return app$navigated.call(_this, ev);
+			});
+		} else {
+			domconsole.log('hi! especser is an app to search the ECMAScript specification ed6.0. please click update to cache spec for the first time.');
 		}
-		if (target.classList.contains('link-tab-activate')) {}
 	}
 
 	function app$navigated(ev) {
 		var newIndex = window.location.hash.replace('#', '').trim();
 		var frame = Spec.indexToFrame(newIndex);
-		if (frame) return newTab(frame);
+		if (frame) {
+			newTab(frame).then(function (_) {
+				return $.id('top-bar').classList.add('hidden');
+			});
+		}
 	}
 
 	function newTab(res) {
@@ -11231,7 +11238,7 @@ System.register('src/domhandler', ['npm:babel-runtime@5.5.8/helpers/to-consumabl
 		});
 		descriptorList.appendChild(tabDescriptor);
 		var tabContent = generateView(res);
-		tabContent.then(function (tc) {
+		return tabContent.then(function (tc) {
 			$.apply(tc, {
 				classList: ['active'],
 				dataset: { secIndex: res.index }
@@ -11239,6 +11246,7 @@ System.register('src/domhandler', ['npm:babel-runtime@5.5.8/helpers/to-consumabl
 			content.appendChild(tc);
 			tabs.openIndexes.push(res.index);
 			tabs.activeTabIndex = res.index; // and also see if this updates
+			return true;
 		});
 	}
 
@@ -11353,6 +11361,8 @@ System.register('src/domhandler', ['npm:babel-runtime@5.5.8/helpers/to-consumabl
 			Shortcuts = _srcModShortcuts;
 		}, function (_srcModUtils) {
 			Utils = _srcModUtils;
+		}, function (_srcModDomconsole) {
+			domconsole = _srcModDomconsole.domconsole;
 		}],
 		execute: function () {
 			'use strict';
@@ -11374,6 +11384,7 @@ System.register('src/domhandler', ['npm:babel-runtime@5.5.8/helpers/to-consumabl
 			$.id('btn-update').addEventListener('click', Spec.initialize, false);
 			$.id('btn-clear').addEventListener('click', Spec.clear, false);
 			window.addEventListener('hashchange', app$navigated, false);
+			window.addEventListener('load', window$loaded);
 
 			/**
     * tab creation, previewing, and handling
@@ -11393,22 +11404,10 @@ System.register('src/domhandler', ['npm:babel-runtime@5.5.8/helpers/to-consumabl
 		}
 	};
 });
-
-// return
 System.register('src/index', ['github:aaike/jspm-less-plugin@0.0.5', 'src/mod/shortcuts', 'src/mod/sdm', 'src/domhandler', 'src/spec', 'src/mod/domconsole'], function (_export) {
 	'use strict';
 
 	var Shortcuts, Spec, domconsole, topbar, search;
-
-	function window$loaded() {
-		if (window.localStorage.getItem('lastIndexed')) {
-			Spec.initialize();
-			// domconsole.log('hi! enter something in the search bar to search the spec. if you don\'t find stuff, trying clicking clear db and try again.');
-		} else {
-			domconsole.log('hi! especser is an app to search the ECMAScript specification ed6.0. please click update to cache spec for the first time.');
-		}
-	}
-
 	return {
 		setters: [function (_githubAaikeJspmLessPlugin005) {}, function (_srcModShortcuts) {
 			Shortcuts = _srcModShortcuts;
@@ -11431,7 +11430,7 @@ System.register('src/index', ['github:aaike/jspm-less-plugin@0.0.5', 'src/mod/sh
 			Shortcuts.register({ key: 'Esc' }, function (e) {
 				e.preventDefault();
 				topbar.classList.add('hidden');
-			});window.addEventListener('load', window$loaded);
+			});
 		}
 	};
 });

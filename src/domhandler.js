@@ -1,6 +1,7 @@
 import * as Spec from './spec';
 import * as Shortcuts from './mod/shortcuts';
 import * as Utils from './mod/utils';
+import {domconsole} from './mod/domconsole';
 
 /**
  * helpers for handlers
@@ -33,6 +34,15 @@ function input$onInput () {
 				href: `#${encodeURIComponent(res.index)}`,
 				dataset: {
 					index: res.index
+				},
+				on: {
+					click: function (e) {
+						e.preventDefault();
+						active.classList.remove('active');
+						this.classList.add('active');
+						active = this;
+						form$onEnter.call($.id('search-form'), {target: inputBox});
+					}
 				},
 				childNodes: [
 					$.make('h4', {
@@ -142,34 +152,21 @@ function result$onFocus (ev) {
 	previewContent(Spec.indexToFrame(target.dataset.index));
 }
 
-function anchor$shouldPreventDefault (target) {
-	if (target.nodeName === 'A' && target.dataset.index) {
-		return target;
+function window$loaded (ev) {
+	if (window.localStorage.getItem('lastIndexed')) {
+		Spec.initialize().then(_ => app$navigated.call(this, ev));
 	}
-	else if (target.nodeName === 'SPAN') {
-		if (target.parentNode.nodeName === 'A' && target.parentNode.dataset.index) return target.parentNode;
-	}
-	return false;
-}
-
-function anchor$onClick (ev) {
-	return true;
-	let target = anchor$shouldPreventDefault(ev.target || ev.srcElement);
-	if (!target) return;
-
-	ev.preventDefault();
-	if (target.classList.contains('link-newtab')) {
-		return newTab(Spec.indexToFrame(target.dataset.index));
-	}
-	if (target.classList.contains('link-tab-activate')) {
-		// return 
+	else {
+		domconsole.log('hi! especser is an app to search the ECMAScript specification ed6.0. please click update to cache spec for the first time.');
 	}
 }
 
 function app$navigated (ev) {
 	let newIndex = window.location.hash.replace('#', '').trim();
 	let frame = Spec.indexToFrame(newIndex);
-	if (frame) return newTab(frame);
+	if (frame) {
+		newTab(frame).then(_ => $.id('top-bar').classList.add('hidden'));
+	}
 }
 
 /**
@@ -181,6 +178,7 @@ $.id('search-form').addEventListener('keydown', form$onKeyDown, false);
 $.id('btn-update').addEventListener('click', Spec.initialize, false);
 $.id('btn-clear').addEventListener('click', Spec.clear, false);
 window.addEventListener('hashchange', app$navigated, false);
+window.addEventListener('load', window$loaded);
 
 /**
  * tab creation, previewing, and handling
@@ -227,7 +225,7 @@ function newTab (res) {
 	});
 	descriptorList.appendChild(tabDescriptor);
 	let tabContent = generateView(res);
-	tabContent.then(tc => {
+	return tabContent.then(tc => {
 		$.apply(tc, {
 			classList: ['active'],
 			dataset: {secIndex: res.index}
@@ -235,6 +233,7 @@ function newTab (res) {
 		content.appendChild(tc);
 		tabs.openIndexes.push(res.index);
 		tabs.activeTabIndex = res.index; // and also see if this updates
+		return true;
 	});
 }
 
