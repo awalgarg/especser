@@ -1,12 +1,12 @@
 import * as Utils from './mod/utils';
 import {domconsole} from './mod/domconsole';
-
+import {config} from './config';
 //=================================================================================================
 // storage stuff
 
 export let Store = localforage.createInstance({
 	name: 'especser',
-	storeName: 'sec'
+	storeName: config.IDBstoreName
 });
 
 export let Data = {
@@ -30,25 +30,10 @@ export function indexToFrame (index) {
 	} catch (err) { return null; }
 }
 
-var SPEC_URL;
-
-if (window.location.hostname === 'localhost') {
-	SPEC_URL = '/spec_cache.html';
-	// WE JUST ASSUME SOME STUFF
-	// PROBLEM??
-}
-else {
-	SPEC_URL = 'http://crossorigin.me/http://www.ecma-international.org/ecma-262/6.0/index.html';
-	// dear speccers, consider allowing cross origin requests
-	// yes i called you _speccers_
-	// and i wrote i without capitalization (again)
-	// come yell at me about it at http://theamountoffucksigive.com
-}
-
 //=================================================================================================
 // functions to scrape spec
 
-function fetchSpec (url = SPEC_URL) {
+function fetchSpec (url = config.SPEC_URL) {
 	console.log('sending request to %s', url);
 	let f = fetch(
 		url
@@ -187,6 +172,12 @@ export function initialize () {
 export function clear () {
 	console.log('I have got orders from high command to evacuate all data from the ship.');
 	domconsole.log('clearing store. this might take some time.');
+	Data = {
+		indexToId: {},
+		idToIndex: {},
+		indexToFrameIndex: {},
+		stack: []
+	};
 	Store.clear().then(_ => localStorage.removeItem('lastIndexed')).then(
 		_ => domconsole.log('store was emptied. click update to cache spec again.')
 	);
