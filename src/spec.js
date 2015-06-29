@@ -19,7 +19,7 @@ export let Data = {
 
 export function indexToPath (index) {
 	let pathNums = index.split('.');
-	return pathNums.map(
+	return pathNums.map((_, i, arr) => arr.slice(0, i + 1).join('.')).map(
 		num => Data.stack[Data.indexToFrameIndex[num]].title
 	).join(' | ');
 }

@@ -30,7 +30,7 @@ function input$onInput () {
 	let resultsDomTree = results.map(res => {
 		return $.make('li', {
 			childNodes: [$.make('a', {
-				classList: ['result', 'link-previewer', 'link-newtab'],
+				classList: ['result', 'link-newtab'],
 				href: `#${encodeURIComponent(res.index)}`,
 				dataset: {
 					index: res.index
@@ -130,13 +130,11 @@ function form$onEnter (ev) {
 
 	if (!active.classList.contains('result')) return;
 	target = active;
-	clearPreview();
 	newTab(Spec.indexToFrame(target.dataset.index));
 	form$onEscape.call(this);
 }
 
 function form$onEscape () {
-	clearPreview();
 	this.parentNode.classList.add('hidden');
 }
 
@@ -144,12 +142,6 @@ function simulateFocus (el) {
 	active.classList.remove('active');
 	el.classList.add('active');
 	active = el;
-	result$onFocus({target: el});
-}
-
-function result$onFocus (ev) {
-	let target = ev.target || ev.srcElement;
-	previewContent(Spec.indexToFrame(target.dataset.index));
 }
 
 function window$loaded (ev) {
@@ -165,7 +157,7 @@ function app$navigated (ev) {
 	let newIndex = window.location.hash.replace('#', '').trim();
 	let frame = Spec.indexToFrame(newIndex);
 	if (frame) {
-		newTab(frame).then(_ => $.id('top-bar').classList.add('hidden'));
+		Promise.resolve(newTab(frame)).then(_ => $.id('top-bar').classList.add('hidden'));
 	}
 }
 
@@ -195,13 +187,16 @@ let descriptorList = $.id('open-tab-descriptors');
 let openTabDescriptors = descriptorList.childNodes;
 let suspendedTabs = $.id('suspended-tabs');
 let content = $.id('content');
-let previewBox = $.id('preview');
 
 function newTab (res) {
-	if (tabs.activeTabIndex === res.index) return;
+	if (tabs.activeTabIndex === res.index) {
+		return;
+	}
 	suspendAnyActiveTab();
 	let indexIfOpen = tabs.openIndexes.indexOf(res.index);
-	if (indexIfOpen > -1) return activateSuspendedTab(indexIfOpen, res.index);
+	if (indexIfOpen > -1) {
+		return activateSuspendedTab(indexIfOpen, res.index);
+	}
 	let tabDescriptor = $.make('li', {
 		childNodes: [
 			$.make('div', {
@@ -232,7 +227,7 @@ function newTab (res) {
 		});
 		content.appendChild(tc);
 		tabs.openIndexes.push(res.index);
-		tabs.activeTabIndex = res.index; // and also see if this updates
+		tabs.activeTabIndex = res.index;
 		return true;
 	});
 }
@@ -263,7 +258,9 @@ function closeTab (res) {
 
 function suspendAnyActiveTab () {
 	let activeTab = $.cl('tab-content active', content);
-	if (!activeTab) return;
+	if (!activeTab) {
+		return;
+	}
 	activeTab.classList.remove('active');
 	$.cl('link-tab-descriptor active').classList.remove('active');
 	suspendedTabs.appendChild(activeTab);
