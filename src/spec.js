@@ -1,3 +1,4 @@
+import 'fetch';
 import * as Utils from './mod/utils';
 import {domconsole} from './mod/domconsole';
 import {config} from './config';
