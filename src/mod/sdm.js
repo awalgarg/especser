@@ -165,10 +165,10 @@
         }
 
     };
-    
+
     $.remove = function (node) {
         if (typeof node === 'string') node = $(node);
-        if (node) node.parentNode.removeChild(node);
+        if (node && node.parentNode) node.parentNode.removeChild(node);
     };
-    
+
 })(window, document);

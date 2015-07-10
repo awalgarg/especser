@@ -19,16 +19,11 @@ function emphasizeSearch (search, text) {
 let results = document.getElementById('search-results').getElementsByClassName('result');
 let inputBox = $.nam('search');
 let active = inputBox;
+let resultsGenerator;
+let resultsBox = $.id('search-results');
 
-function input$onInput () {
-	let val = this.value.trim();
-	let results = Spec.search(val);
-	active = inputBox;
-
-	let resultsBox = $.id('search-results');
-
-	let resultsDomTree = results.map(res => {
-		return $.make('li', {
+function createResultList (results, val) {
+	return results.map(res => $.make('li', {
 			childNodes: [$.make('a', {
 				classList: ['result', 'link-newtab'],
 				href: `#${encodeURIComponent(res.index)}`,
@@ -59,12 +54,19 @@ function input$onInput () {
 					})
 				]
 			})]
-		});
-	});
+		}));
+}
+
+function input$onInput () {
+	let val = this.value.trim();
+	resultsGenerator = Spec.search(val);
+	active = inputBox;
+
+	let resultList = createResultList(resultsGenerator.next().value, val);
 
 	$$.tag('li', resultsBox).forEach($.remove);
 
-	resultsDomTree.forEach(el => $.append(el, resultsBox));
+	resultList.forEach(el => $.append(el, resultsBox));
 }
 
 function form$onKeyDown (ev) {
@@ -97,9 +99,20 @@ function form$onKeyDown (ev) {
 
 function form$onDownArrow () {
 	if (active === inputBox) {
-		return simulateFocus(results[0]);
+		return results[0] && simulateFocus(results[0]);
 	}
 	if (active.classList.contains('result')) {
+		if (active === resultsBox.lastElementChild.firstElementChild) {
+			let moreResults = resultsGenerator.next();
+			if (moreResults.done) return;
+			if (moreResults.value.length) {
+				let resultList = createResultList(moreResults.value, inputBox.value.trim());
+				resultList.forEach(el => $.append(el, resultsBox));
+				simulateFocus(resultList[0].firstChild);
+				return;
+			}
+			return;
+		}
 		try {
 			return simulateFocus(active.parentNode.nextElementSibling.firstChild);
 		} catch (er) {}
@@ -130,7 +143,7 @@ function form$onEnter (ev) {
 
 	if (!active.classList.contains('result')) return;
 	target = active;
-	newTab(Spec.indexToFrame(target.dataset.index));
+	openTab(target.dataset.index);
 	form$onEscape.call(this);
 }
 
@@ -142,6 +155,7 @@ function simulateFocus (el) {
 	active.classList.remove('active');
 	el.classList.add('active');
 	active = el;
+	el.scrollIntoView();
 }
 
 function window$loaded (ev) {
@@ -157,7 +171,7 @@ function app$navigated (ev) {
 	let newIndex = window.location.hash.replace('#', '').trim();
 	let frame = Spec.indexToFrame(newIndex);
 	if (frame) {
-		Promise.resolve(newTab(frame)).then(_ => $.id('top-bar').classList.add('hidden'));
+		Promise.resolve(openTab(newIndex)).then(_ => $.id('top-bar').classList.add('hidden'));
 	}
 }
 
@@ -176,28 +190,44 @@ window.addEventListener('load', window$loaded);
  * tab creation, previewing, and handling
  */
 
-let tabs = {
-	openIndexes: [],
-	activeTabIndex: null,
-	tabIndexToRestore: null,
-	state: null
+import {TabGroup, Tab} from './mod/tabbing';
+
+let group = new TabGroup();
+
+let content = $.id('content');
+let suspendedTabs = $.id('suspended-tabs');
+let descriptorList = $.id('open-tab-descriptors');
+
+let state = {
+	open: Object.create(null),
+	tokenToIndexMap: Object.create(null),
+	get activeTabIndex () {
+		let el = $.cl('tab-content', content);
+		if (!el) return;
+		return el.dataset.secIndex;
+	}
 };
 
-let descriptorList = $.id('open-tab-descriptors');
-let openTabDescriptors = descriptorList.childNodes;
-let suspendedTabs = $.id('suspended-tabs');
-let content = $.id('content');
+function openTab (index) {
+	if (index in state.open) {
+		return group.open(state.open[index]);
+	}
 
-function newTab (res) {
-	if (tabs.activeTabIndex === res.index) {
-		return;
-	}
-	suspendAnyActiveTab();
-	let indexIfOpen = tabs.openIndexes.indexOf(res.index);
-	if (indexIfOpen > -1) {
-		return activateSuspendedTab(indexIfOpen, res.index);
-	}
-	let tabDescriptor = $.make('li', {
+	let tabData = Spec.indexToFrame(index);
+
+	let descriptor = createDescriptor(tabData);
+	descriptorList.appendChild(descriptor);
+	descriptor.scrollIntoView();
+
+	let tab = new Tab(tabData.title, tabData.path, index);
+	let tabToken = group.attach(tab);
+
+	state.open[index] = tabToken;
+	state.tokenToIndexMap[tabToken] = index;
+}
+
+function createDescriptor (res) {
+	return $.make('li', {
 		childNodes: [
 			$.make('div', {
 				classList: ['tab-descriptor', 'link-tab-descriptor', 'active'],
@@ -212,89 +242,83 @@ function newTab (res) {
 					}),
 					$.make('span', {
 						classList: ['tab-close'],
-						on: { click: _ => closeTab(res) }
+						on: {
+							click: function () {
+								group.detach(state.open[res.index]);
+								$.remove(this.parentNode.parentNode);
+							}
+						}
 					})
 				]
 			})
 		]
 	});
-	descriptorList.appendChild(tabDescriptor);
-	let tabContent = generateView(res);
-	return tabContent.then(tc => {
-		$.apply(tc, {
-			classList: ['active'],
-			dataset: {secIndex: res.index}
-		});
-		content.appendChild(tc);
-		tabs.openIndexes.push(res.index);
-		tabs.activeTabIndex = res.index;
-		return true;
-	});
 }
 
-function closeTab (res) {
-	let tabIndex = tabs.openIndexes.indexOf(res.index);
-	tabs.openIndexes.splice(tabIndex, 1);
-	$.remove(openTabDescriptors.item(tabIndex));
-	if (tabs.tabIndexToRestore === res.index) tabs.tabIndexToRestore = null;
-	if (tabs.activeTabIndex === res.index) {
-		$.remove($.cl('tab-content active', content));
-		tabs.activeTabIndex = null;
-		window.history.replaceState({}, '', '#');
-		if (tabs.tabIndexToRestore) {
-			activateSuspendedTab(tabs.openIndexes.indexOf(tabs.tabIndexToRestore), tabs.tabIndexToRestore);
+function closeTab (index) {
+	if (!(index in state.open)) {
+		return;
+	}
+	group.detach(state.open[index]);
+	delete state.tokenToIndexMap[token];
+	delete state.open[index];
+}
+
+function storeAsSuspended (index, data) {
+	if (!data) return;
+	$.remove(data);
+	$.apply(data, {
+		classList: ['tab-content'],
+		dataset: {
+			secIndex: index
 		}
-		else if (tabs.openIndexes.length) {
-			let restorableTabIndex = tabs.openIndexes.length - 1;
-			activateSuspendedTab(restorableTabIndex, tabs.openIndexes[restorableTabIndex]);
-		}
-		return;
-	}
-	else {
-		$.remove($.data('sec-index=', res.index, suspendedTabs));
-		return;
-	}
-}
-
-function suspendAnyActiveTab () {
-	let activeTab = $.cl('tab-content active', content);
-	if (!activeTab) {
-		return;
-	}
-	activeTab.classList.remove('active');
-	$.cl('link-tab-descriptor active').classList.remove('active');
-	suspendedTabs.appendChild(activeTab);
-	tabs.tabIndexToRestore = tabs.activeTabIndex;
-	tabs.activeTabIndex = null;
-	window.history.replaceState({}, '', '#');
-}
-
-function activateSuspendedTab (descriptorIndex, contentIndex) {
-	suspendAnyActiveTab();
-	openTabDescriptors.item(descriptorIndex).firstChild.classList.add('active');
-	let tabContent = $.data('sec-index=', contentIndex, suspendedTabs);
-	tabContent.classList.add('active');
-	content.appendChild(tabContent);
-	tabs.activeTabIndex = contentIndex;
-	window.history.replaceState({}, '', `#${contentIndex}`);
-}
-
-function previewContent (res) {
-	tabs.tabIndexToRestore = tabs.activeTabIndex;
-	suspendAnyActiveTab();
-	tabs.state = 'previewing';
-	Spec.Store.getItem(res.index).then(html => {
-		previewBox.innerHTML = html;
-		previewBox.classList.remove('hidden');
 	});
+	suspendedTabs.appendChild(data);
 }
 
-function clearPreview () {
-	previewBox.classList.add('hidden');
-	if (tabs.tabIndexToRestore) {
-		activateSuspendedTab(tabs.openIndexes.indexOf(tabs.tabIndexToRestore), tabs.tabIndexToRestore);
-	}
+function getDescriptor (index) {
+	return $.data('index=', index, descriptorList).parentNode.parentNode;
 }
+
+function suspendActiveTab () {
+	let index = state.activeTabIndex;
+	if (!index) return;
+	let data = $.data('sec-index=', index, content);
+	storeAsSuspended(index, data);
+}
+
+function getFromSuspended (index) {
+	return $.data('sec-index=', index, suspendedTabs);
+}
+
+function onAttach ({id: token}) {
+	let index = group.tabs[token].meta;
+
+	let el = generateView(Spec.indexToFrame(index));
+	el.then(data => storeAsSuspended(index, data)).then(_ => group.open(token));
+}
+
+function onOpen ({id: token}) {
+	let index = group.tabs[token].meta;
+	suspendActiveTab();
+	content.appendChild(getFromSuspended(index));
+	$.cl('tab-descriptor', getDescriptor(index)).classList.add('active');
+}
+
+function onClose ({id: token}) {
+	suspendActiveTab();
+	$.cl('active', descriptorList).classList.remove('active');
+}
+
+function onDetach ({id: token}) {
+	$.remove(getFromSuspended(state.tokenToIndexMap[token]));
+	group.restoreLast();
+}
+
+group.events.on('open', onOpen);
+group.events.on('close', onClose);
+group.events.on('attach', onAttach);
+group.events.on('detach', onDetach);
 
 function generateView (res) {
 	let path = Spec.indexToPath(res.index);

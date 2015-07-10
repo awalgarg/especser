@@ -2,7 +2,6 @@ import 'fetch';
 import * as Utils from './mod/utils';
 import {domconsole} from './mod/domconsole';
 import {config} from './config';
-//=================================================================================================
 // storage stuff
 
 export let Store = localforage.createInstance({
@@ -13,7 +12,6 @@ export let Store = localforage.createInstance({
 export let Data = {
 	indexToId: {}, // 4.6.5: #sec-foo
 	idToIndex: {}, // #sec-foo: 4.6.5...
-	// indexToHTML: {}, // index maps to _processed_ html, only in indexedDB
 	indexToFrameIndex: {}, // eg: 2.1.3 maps to 17 where 17 is the index of the corresponding frame inside stack
 	stack: [] // contains frames containing data
 };
@@ -31,7 +29,6 @@ export function indexToFrame (index) {
 	} catch (err) { return null; }
 }
 
-//=================================================================================================
 // functions to scrape spec
 
 function fetchSpec (url = config.SPEC_URL) {
@@ -62,7 +59,7 @@ function extractText (el, secnum) {
 
 function parseIndex (doc) {
 	let elements = $$('span.secnum[id^="sec-"]', doc);
-	
+
 	elements.forEach(function (secnum, stackIndex) {
 
 		let index = secnum.textContent;
@@ -93,7 +90,7 @@ function parseIndex (doc) {
 		let children = [];
 		let def = {index, id, title, children, path, stackIndex};
 		Data.stack.push(def);
-		
+
 		Data.indexToId[index] = id;
 		Data.idToIndex[id] = index;
 		Data.indexToFrameIndex[index] = stackIndex;
@@ -184,7 +181,6 @@ export function clear () {
 	);
 }
 
-//=================================================================================================
 // spec usage API to be exposed
 
 const MAX_RESULTS = 8;
@@ -201,25 +197,76 @@ function fuzzySearch (name, query, max = MAX_RESULTS) {
 	return true;
 }
 
-// *internal* searches stack to get queried results
-function executeSearch (stack, query, max = MAX_RESULTS) {
+const RE_SEC = /^sec:\s*(?:(?:\d+\.?)+,?\s*)+\b/i;
+
+/*
+
+^ # start of string											|||||
+sec: # "sec:"												|||||
+\s* # forgive whitespace									|||||
+(?: # begin matching set of indices					|||||		|||||
+	(?: # begin matching individaul indices		|||||	|||||		|||||
+		\d+ # one or more digits				|||||	|||||		|||||
+		\.? # followed by a period				|||||	|||||		|||||
+	)+ # and done								|||||	|||||		|||||
+	,? # and maybe commas							|||||		|||||
+	\s* # and maybe whitespace						|||||		|||||
+)+ # 1 or more times								|||||		|||||
+\b # and word boundary so trailing commas aren't matched	|||||
+
+*/
+
+function* executeSearch (stack, query, max = MAX_RESULTS) {
+
+	query = (query + '').trim();
 	if (!query) return [];
-	query = query.trim().toLowerCase();
-	let results = [], directMatches = 0, fuzzyMatches = 0, totalMatches = 0;
-	for (let i = 0, len = stack.length; i < len && totalMatches <= max; i++) {
-		let title = stack[i].title.toLowerCase();
+
+	let index = query.match(RE_SEC), selectedStack = [];
+
+	if (index && index[0]) {
+		let indices = index[0].replace('sec:', '').trim().split(/,\s*/);
+
+		// initializing selectedStack with parent indices and all there children
+		// our stack is pretty large. so not using closures here
+		for (let i = 0; i < indices.length; i++) {
+			let frame = indexToFrame(indices[i]);
+			if (!frame) continue;
+			indices.push(...frame.children);
+			selectedStack.push(frame);
+		}
+		query = query.replace(RE_SEC, '').replace(/[.,]/g, '').trim();
+		if (!query) return selectedStack; // we return it here itself because the stack will likely not be large
+	} else {
+		selectedStack = stack;
+	}
+
+	for (
+		let i = 0, len = selectedStack.length,
+		results = [], fuzzyResults = [];
+		i < len;
+		i++
+	) {
+		let title = selectedStack[i].title.toLowerCase();
 		if (title.indexOf(query) >= 0) {
-			results.unshift(stack[i]);
-			directMatches++;
-			totalMatches++;
+			results.push(selectedStack[i]);
 		}
 		else if (fuzzySearch(title, query)) {
-			results.push(stack[i]);
-			fuzzyMatches++;
-			totalMatches++;
+			fuzzyResults.push(selectedStack[i]);
 		}
-  	}
-  	return results;
+		if (results.length >= max) {
+			yield results;
+			results = [];
+			continue;
+		}
+		else if (i >= len - 1) {
+			results.push(...fuzzyResults.slice(0, (max - results.length) - 1));
+			yield results;
+			results = [];
+			continue;
+		}
+	}
+	return [];
+
 }
 
 export function search (query) {
