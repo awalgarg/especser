@@ -1,4 +1,3 @@
-import 'less';
 import * as Shortcuts from './mod/shortcuts';
 import './mod/sdm';
 import './domhandler';
