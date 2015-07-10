@@ -218,7 +218,7 @@ sec: # "sec:"												|||||
 
 function* executeSearch (stack, query, max = MAX_RESULTS) {
 
-	query = (query + '').trim();
+	query = (query + '').trim().toLowerCase();
 	if (!query) return [];
 
 	let index = query.match(RE_SEC), selectedStack = [];
