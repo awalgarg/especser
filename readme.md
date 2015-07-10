@@ -20,13 +20,15 @@ the es specs are pretty much awful to read. even more awful to navigate. especse
 10. click on the large index number at the top-left of any content page and copy the url in the address bar to share a perma-link to that section with anyone else
 11. links inside the spec are internal. so clicking on any link inside the spec will open that section within the app
 12. you can remove the data from indexedDB by clicking the clear store button
+13. keep hitting the down arrow key while searching to extract more results
+14. if your search starts with `sec: <index1, index2...>`, it will list all those sections and subsections. if a query follows, only sections matching it will be listed.
 
 ##running locally
 
 - clone repo
 - `npm install`
 - `jspm install`
-- `jspm bundle-sfx src/index dist/index.js`
+- `iojs build.js`
 - start a webserver in the project root
 - open the url to the server
 
