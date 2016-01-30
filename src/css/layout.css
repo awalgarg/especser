@@ -133,7 +133,7 @@ body {
                     overflow: hidden;
                     align-items: center;
                     width: 100%;
-                    padding: 0 0.2rem;
+                    padding: 0 1rem;
                     height: 100%;
 
                     a.link-tab-activate {
@@ -249,7 +249,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: inherit;
+    padding: 0 1rem;
     opacity: 0.5;
     z-index: -1;
 }
